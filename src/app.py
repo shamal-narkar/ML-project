@@ -1,52 +1,64 @@
-import streamlit as st 
+import streamlit as st
 import pandas as pd
-import numpy as np
+import pickle
+
+# Load data (only for dropdowns)
+df = pd.read_csv(r'C:\Users\Prathamesh\Desktop\123\data\heart.csv')
+
+# Load models and encoders
+with open(r'C:\Users\Prathamesh\Desktop\123\models\encoder.pickle', 'rb') as f:
+    label_encoders = pickle.load(f)
+
+with open(r'C:\Users\Prathamesh\Desktop\123\models\scaler.pickle', 'rb') as f:
+    scaler = pickle.load(f)
+
+with open(r'C:\Users\Prathamesh\Desktop\123\models\model.pickle', 'rb') as f:
+    model = pickle.load(f)
+
+st.title("Heart Disease Prediction App")
+# User input form
+age = st.selectbox(options=list(df['Age'].unique()), label='Choose your Age')
+Sex = st.selectbox(options=list(df['Sex'].unique()), label='Choose your Sex')
+ChestPainType = st.selectbox(options=list(df['ChestPainType'].unique()), label='Choose your ChestPainType')
+RestingBP = st.selectbox(options=list(df['RestingBP'].unique()), label='Choose your RestingBP')
+Cholesterol = st.selectbox(options=list(df['Cholesterol'].unique()), label='Choose your Cholesterol')
+FastingBS = st.selectbox(options=list(df['FastingBS'].unique()), label='Choose your FastingBS')
+RestingECG = st.selectbox(options=list(df['RestingECG'].unique()), label='Choose your RestingECG')
+MaxHR = st.selectbox(options=list(df['MaxHR'].unique()), label='Choose your MaxHR')
+ExerciseAngina = st.selectbox(options=list(df['ExerciseAngina'].unique()), label='Choose your ExerciseAngina')
+Oldpeak = st.selectbox(options=list(df['Oldpeak'].unique()), label='Choose your Oldpeak')
+ST_Slope = st.selectbox(options=list(df['ST_Slope'].unique()), label='Choose your ST_Slope')
+
+# Build input DataFrame
+input_data = {
+    'Age': age,
+    'Sex': Sex,
+    'ChestPainType': ChestPainType,
+    'RestingBP': RestingBP,
+    'Cholesterol': Cholesterol,
+    'FastingBS': FastingBS,
+    'RestingECG': RestingECG,
+    'MaxHR': MaxHR,
+    'ExerciseAngina': ExerciseAngina,
+    'Oldpeak': Oldpeak,
+    'ST_Slope': ST_Slope
+}
+
+df_input = pd.DataFrame([input_data])
+
+# Encode categorical columns using stored label encoders
+for col in ['Sex', 'ChestPainType', 'RestingECG', 'ExerciseAngina', 'ST_Slope']:
+    le = label_encoders[col]
+    df_input[col] = le.transform(df_input[col])
+
+# Scale numeric columns
+num_cols = ['Age', 'RestingBP', 'Cholesterol', 'MaxHR', 'Oldpeak']
+df_input[num_cols] = scaler.transform(df_input[num_cols])
 
 
-st.write("Here's our first attempt at using data to create a table:")
-st.write(pd.DataFrame({
-    'first column': [1, 2, 3, 4],
-    'second column': [10, 20, 30, 40]
-}))
 
-
-st.header("table")
-st.subheader("table")
-
-dataframe = pd.DataFrame(
-    np.random.randn(10, 20),
-    columns=('col %d' % i for i in range(20)))
-
-st.dataframe(dataframe.style.highlight_max(axis=0))
-chart_data = pd.DataFrame(
-     np.random.randn(20, 3),
-     columns=['a', 'b', 'c'])
-
-st.line_chart(chart_data)
-map_data = pd.DataFrame(
-    np.random.randn(1000, 2) / [50, 50] + [19.0760, 72.8777],
-    columns=['lat', 'lon'])
-
-st.map(map_data)
-x = st.slider('x')  # 👈 this is a widget
-st.write(x, 'squared is', x * x)
-df = pd.DataFrame({
-    'first column': [1, 2, 3, 4],
-    'second column': [10, 20, 30, 40]
-    })
-
-option = st.selectbox(
-    'Which number do you like best?',
-     df['first column'])
-
-'You selected: ', option
-add_selectbox = st.sidebar.selectbox(
-    'How would you like to be contacted?',
-    ('Email', 'Home phone', 'Mobile phone')
-)
-
-# Add a slider to the sidebar:
-add_slider = st.sidebar.slider(
-    'Select a range of values',
-    0.0, 100.0, (25.0, 75.0)
-)
+# Prediction
+if st.button("Predict Heart Disease"):
+    prediction = model.predict(df_input)
+    result = "Positive for Heart Disease" if prediction[0] == 1 else "Negative for Heart Disease"
+    st.success(f"Prediction: {result}")

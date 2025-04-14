@@ -22,7 +22,7 @@ for col in ['Sex', 'ChestPainType', 'RestingECG', 'ExerciseAngina', 'ST_Slope']:
     label_encoders[col] = le
 
     with open (r'C:\Users\Prathamesh\Desktop\123\models\encoder.pickle', 'wb') as handel:
-        pickle.dump(le,handel)
+        pickle.dump(label_encoders,handel,protocol=pickle.HIGHEST_PROTOCOL)
     # Feature Selection
 X = df.drop('HeartDisease', axis=1)
 y = df['HeartDisease']
